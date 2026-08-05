@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Rhizome in Relation — Race-Based Centers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f2e8d6;
+    --paper-2:#ece0cb;
+    --ink:#2c2620;
+    --ink-soft:#5b5044;
+    --faint:#a99madd;
+    --line:#d8cab0;
+    --panel:#efe4cf;
+    --highlight:#bd5230;
+    --CESR:#3f5e8c; --CCRRJ:#c8563a; --CAS:#cc9636; --Africana:#7d5680;
+    --CUE:#2f8a83; --CRSP:#bf5c76; --CHE:#6f9350;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 90% 80% at 46% 40%, var(--paper) 0%, var(--paper-2) 78%),
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/></svg>");
+    color:var(--ink);
+    font-family:'Spectral',Georgia,serif;
+    overflow-x:hidden;
+  }
+  .wrap{display:flex;min-height:100vh;flex-direction:row;}
+  .stage{flex:1 1 auto;position:relative;min-width:0;display:flex;flex-direction:column;}
+  header{padding:32px 40px 6px;}
+  .eyebrow{
+    font-family:'Shantell Sans';font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:600;margin-bottom:10px;
+  }
+  h1{
+    font-family:'Shantell Sans';font-weight:700;
+    font-size:clamp(28px,3.6vw,44px);line-height:1;letter-spacing:-.01em;color:var(--ink);
+  }
+  .epigraph{
+    font-style:italic;font-size:15px;color:var(--ink-soft);max-width:52ch;
+    line-height:1.55;margin-top:12px;padding-left:14px;border-left:2px solid var(--line);
+  }
+  .sub{margin-top:14px;color:var(--ink-soft);font-size:14px;max-width:58ch;line-height:1.5;font-family:'Shantell Sans';font-weight:400;}
+  .graph-area{flex:1 1 auto;position:relative;min-height:460px;}
+  svg.canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .edge{
+    fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28;
+    stroke-linecap:round;
+    transition:opacity .4s ease, stroke-width .4s ease, stroke .4s ease;
+  }
+  .edge.lit{stroke-width:3;opacity:.92;}
+  .edge.dim{opacity:.05;}
+  .blob{stroke:var(--ink);stroke-width:2;transition:opacity .4s ease;}
+  .blob.dim{opacity:.28;}
+  .bloom{opacity:0;transition:opacity .5s ease;}
+  .bloom.on{opacity:.9;}
+  .hit{fill:transparent;cursor:pointer;}
+  .abbr{
+    font-family:'Shantell Sans';font-weight:700;font-size:18px;
+    fill:var(--paper);text-anchor:middle;dominant-baseline:central;pointer-events:none;
+    paint-order:stroke;stroke:var(--ink);stroke-width:.4px;
+  }
+  .tag{
+    font-family:'Shantell Sans';font-size:13.5px;font-weight:600;fill:var(--ink);
+    text-anchor:middle;pointer-events:none;
+    paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round;
+  }
+  .node.dim .tag{opacity:.4;}
+  .node.dim .abbr{opacity:.4;}
+  .hit:focus{outline:none;}
+  .node.focus .abbr{fill:var(--ink);}
+  .float{
+    font-family:'Shantell Sans';font-style:italic;font-weight:500;font-size:16px;
+    fill:var(--ink-soft);opacity:.22;pointer-events:none;
+  }
+  .current-label{
+    font-family:'Shantell Sans';font-weight:700;font-size:21px;
+    fill:var(--highlight);text-anchor:middle;pointer-events:none;
+    opacity:0;transition:opacity .45s ease;
+    paint-order:stroke;stroke:var(--paper);stroke-width:6px;stroke-linejoin:round;
+  }
+  .current-label.on{opacity:1;}
+  .current-sub{
+    font-family:'Shantell Sans';font-style:italic;font-weight:500;font-size:12px;
+    fill:var(--ink-soft);text-anchor:middle;pointer-events:none;
+    opacity:0;transition:opacity .45s ease;
+    paint-order:stroke;stroke:var(--paper);stroke-width:5px;stroke-linejoin:round;
+  }
+  .current-sub.on{opacity:1;}
+  /* panel */
+  .panel{
+    flex:0 0 344px;width:344px;background:var(--panel);
+    border-left:1.5px solid var(--line);padding:30px 28px;
+    display:flex;flex-direction:column;gap:18px;
+  }
+  .panel h2{font-family:'Shantell Sans';font-weight:700;font-size:21px;line-height:1.08;}
+  .panel .lede{color:var(--ink-soft);font-size:14px;line-height:1.55;font-style:italic;}
+  .controls{display:flex;flex-direction:column;gap:9px;}
+  .controls .label{font-family:'Shantell Sans';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;margin-bottom:2px;}
+  .btn{
+    text-align:left;background:transparent;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:14px 10px 16px 9px;padding:9px 13px;
+    font-family:'Shantell Sans';font-size:13.5px;font-weight:500;cursor:pointer;
+    transition:border-color .2s,background .2s,color .2s;
+    display:flex;align-items:center;gap:9px;
+  }
+  .btn:hover{border-color:var(--ink-soft);background:rgba(44,38,32,0.04);}
+  .btn.active{border-color:var(--highlight);color:var(--highlight);background:rgba(189,82,48,0.08);}
+  .btn .dot{width:9px;height:9px;border-radius:50%;background:var(--highlight);flex:0 0 auto;}
+  .reset{align-self:flex-start;color:var(--ink-soft);border-color:transparent;padding-left:2px;}
+  .reset:hover{color:var(--ink);background:transparent;}
+  .detail{flex:1 1 auto;display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;}
+  .conn{border-top:1.5px solid var(--line);padding-top:11px;}
+  .conn .who{font-family:'Shantell Sans';font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .conn .who .chip{width:11px;height:11px;border-radius:50% 40% 55% 45%;flex:0 0 auto;border:1px solid var(--ink);}
+  .conn .what{font-size:13.5px;color:var(--ink-soft);line-height:1.5;}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;border-top:1.5px solid var(--line);padding-top:16px;}
+  .legend .item{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-soft);font-family:'Shantell Sans';font-weight:500;}
+  .legend .chip{width:11px;height:11px;border-radius:55% 45% 50% 50%;border:1px solid var(--ink);}
+  .note{font-size:11.5px;color:var(--ink-soft);line-height:1.5;border-top:1.5px solid var(--line);padding-top:14px;font-style:italic;}
+  @media (min-width:901px){
+    html,body{height:100%;}
+    body{overflow:hidden;}
+    .wrap{height:100vh;align-items:flex-start;}
+    .stage{height:100vh;overflow:hidden;}
+    .graph-area{min-height:0;}
+    .panel{height:100vh;overflow-y:auto;}
+    .detail{flex:0 0 auto;overflow:visible;}
+  }
+  @media (max-width:900px){
+    .wrap{flex-direction:column;}
+    .panel{flex:none;width:100%;border-left:none;border-top:1.5px solid var(--line);}
+    .graph-area{min-height:60vh;}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01ms!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stage">
+    <header>
+      <div class="eyebrow">Édouard Glissant · Poetics of Relation</div>
+      <h1>A rhizome, not a root</h1>
+      <p class="epigraph">No single taproot claiming the ground — many roots reaching toward one another. Identity made, and remade, in relation.</p>
+      <p class="sub">Hover a center to trace how it reaches toward the others. Follow a shared current to see where three or more meet.</p>
+    </header>
+    <div class="graph-area">
+      <svg class="canvas" id="canvas" preserveAspectRatio="xMidYMid meet" aria-label="A hand-drawn rhizome of seven race-based centers and the currents between them">
+        <defs>
+          <filter id="rough" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="2" seed="7" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <filter id="soft" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="12"/></filter>
+        </defs>
+      </svg>
+    </div>
+  </div>
+  <aside class="panel">
+    <div>
+      <h2 id="panelTitle">The whole relation</h2>
+      <p class="lede" id="panelLede">Seven centers, each in relation with every other — twenty-one living currents. Choose a center to follow its six, or trace a shared current below.</p>
+    </div>
+    <div class="controls">
+      <span class="label">Shared currents · 3+ centers</span>
+      <div id="themeBtns"></div>
+      <button class="btn reset" id="resetBtn">↺ See the whole relation</button>
+    </div>
+    <div class="detail" id="detail"></div>
+    <div class="legend" id="legend"></div>
+    <p class="note">CRSP runs through the connection data but is absent from the source glossary — shown here as Center on Race &amp; Social Problems (to confirm). The drifting phrases belong to no single center; they move through the whole frame.</p>
+  </aside>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const VBW=1000, VBH=800;
+const svg=document.getElementById('canvas');
+svg.setAttribute('viewBox',`0 0 ${VBW} ${VBH}`);
+
+const centers={
+  CESR:    {name:'Center for Ethnic Studies Research',        x:500,y:120, hex:'#3f5e8c'},
+  CCRRJ:   {name:'Center for Civil Rights & Racial Justice',   x:828,y:228, hex:'#c8563a'},
+  CAS:     {name:'Center for African Studies',                 x:880,y:505, hex:'#cc9636'},
+  Africana:{name:'Africana Studies Department',                x:648,y:678, hex:'#7d5680'},
+  CUE:     {name:'Center for Urban Education',                 x:336,y:672, hex:'#2f8a83'},
+  CRSP:    {name:'Center on Race & Social Problems',           x:128,y:470, hex:'#bf5c76'},
+  CHE:     {name:'Center for Healthy Equity',                  x:188,y:212, hex:'#6f9350'},
+};
+const edges=[
+  {a:'CESR',b:'CCRRJ',t:'Collective PIVOT grant queries; grow and deepen the Latinx Connect conference into a signature event.'},
+  {a:'CESR',b:'CRSP',t:'Share programs and strategies.'},
+  {a:'CESR',b:'CAS',t:'Build a grant on AI, transnational networks, and equity.'},
+  {a:'CESR',b:'CHE',t:'Emerging Latino communities in the US; K–12 teachers book review.'},
+  {a:'CESR',b:'CUE',t:'Run an Impossible Project for AI affiliates in CUE.'},
+  {a:'CESR',b:'Africana',t:'Run an Impossible Project for the Africana Studies retreat.'},
+  {a:'CCRRJ',b:'CAS',t:'Research on law and immigration; advocacy work (e.g., immigration).'},
+  {a:'CCRRJ',b:'CHE',t:'Grand rounds and medical-legal partnerships; annual event on the state of public health.'},
+  {a:'CCRRJ',b:'CUE',t:'Capacity building, local connections, grad-student engagement, visible events.'},
+  {a:'CCRRJ',b:'CRSP',t:'Connection identified — collaboration details still to be defined.'},
+  {a:'CCRRJ',b:'Africana',t:'Race and sports: events, courses, certifications, research.'},
+  {a:'CRSP',b:'CAS',t:'Model African Union; globalization for faculty/staff; strategic collaborative grants; joint curriculum development.'},
+  {a:'CRSP',b:'CHE',t:'Black aging research collaborative; arts research collaborative.'},
+  {a:'CRSP',b:'CUE',t:'Educational arm of CRSP: co-funding; cross-listed SW–ED classes.'},
+  {a:'CRSP',b:'Africana',t:'Race in America conference; cross-list SW with Black families; joint SW–Africana major; cross-listed research methods.'},
+  {a:'CAS',b:'CHE',t:'Affiliated faculty advisory board (FAB); Senegal/Gambia research; global collaborations.'},
+  {a:'CAS',b:'CUE',t:'Share opportunities with CUE affiliates; Model African Union; Teach Africa Workshop.'},
+  {a:'CAS',b:'Africana',t:'Shared events/speakers calendar; Ghana study tours (Nov & May) with Twi language instruction; fundraising; shared student events.'},
+  {a:'CHE',b:'CUE',t:'Community certification; CPR/Narcan training; affiliate faculty connections.'},
+  {a:'CHE',b:'Africana',t:'Joint Africana–SPH major/minor; certificate; cross-listed courses.'},
+  {a:'CUE',b:'Africana',t:'Student connections and invitations; cross-listed urban education courses; shared race spaces in Posvar; Certificate in Urban Ed/Africana.'},
+];
+const themes=[
+  {name:'Model African Union',nodes:['CAS','CRSP','CUE'],pairs:[['CRSP','CAS'],['CAS','CUE']],blurb:'A recurring convening drawing African Studies, Race & Social Problems, and Urban Education into one room.'},
+  {name:'Impossible Project',nodes:['CESR','CUE','Africana'],pairs:[['CESR','CUE'],['CESR','Africana']],blurb:'Ethnic Studies Research seeds Impossible Projects across Urban Education and Africana Studies.'},
+  {name:'AI & equity grants',nodes:['CESR','CAS','CUE'],pairs:[['CESR','CAS'],['CESR','CUE']],blurb:'AI, transnational networks, and equity link Ethnic Studies, African Studies, and Urban Education.'},
+  {name:'Cross-listed curriculum',nodes:['CRSP','CUE','Africana','CHE'],pairs:[['CRSP','CUE'],['CRSP','Africana'],['CHE','Africana'],['CUE','Africana']],blurb:'Shared courses, majors, and certificates weave four centers together through the classroom.'},
+  {name:'Global study tours',nodes:['CAS','CHE','Africana','CUE'],pairs:[['CAS','CHE'],['CAS','Africana'],['CAS','CUE']],blurb:'African Studies anchors travel and field research — Senegal, Gambia, Ghana, Teach Africa.'},
+  {name:'Affiliated faculty / FAB',nodes:['CAS','CHE','CUE'],pairs:[['CAS','CHE'],['CHE','CUE'],['CAS','CUE']],blurb:'A shared advisory-board and affiliate-faculty layer across three centers.'},
+];
+const floats=['Block party','Social Justice Writing Retreat','cultivate joy','Revive MPH · MSW · PhD'];
+const floatPos=[[505,398,-4],[300,300,6],[705,560,-7],[520,244,3]];
+
+// ---- hand-drawn helpers ----
+function rng(seed){let s=seed%2147483647;if(s<=0)s+=2147483646;return()=>(s=s*16807%2147483647)/2147483647;}
+function smoothClosed(p){
+  const n=p.length;let d=`M ${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)} `;
+  for(let i=0;i<n;i++){
+    const p0=p[(i-1+n)%n],p1=p[i],p2=p[(i+1)%n],p3=p[(i+2)%n];
+    const c1x=p1[0]+(p2[0]-p0[0])/6,c1y=p1[1]+(p2[1]-p0[1])/6;
+    const c2x=p2[0]-(p3[0]-p1[0])/6,c2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=`C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)} `;
+  }
+  return d+'Z';
+}
+function blob(cx,cy,r,seed,pts=11){
+  const rand=rng(seed),arr=[];
+  for(let i=0;i<pts;i++){const a=(i/pts)*Math.PI*2;const rr=r*(0.82+0.34*rand());arr.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr]);}
+  return smoothClosed(arr);
+}
+
+// layers
+const gBloom=document.createElementNS(NS,'g');
+const gInk=document.createElementNS(NS,'g');
+const gLabels=document.createElementNS(NS,'g');
+svg.append(gBloom,gInk,gLabels);
+
+// floating phrases
+floats.forEach((f,i)=>{
+  const t=document.createElementNS(NS,'text');
+  t.setAttribute('class','float');
+  t.setAttribute('x',floatPos[i][0]);t.setAttribute('y',floatPos[i][1]);
+  t.setAttribute('text-anchor','middle');
+  t.setAttribute('transform',`rotate(${floatPos[i][2]} ${floatPos[i][0]} ${floatPos[i][1]})`);
+  t.textContent='“'+f+'”';
+  gLabels.appendChild(t);
+});
+
+// in-diagram label for the active shared current
+const currentLabel=document.createElementNS(NS,'text');
+currentLabel.setAttribute('class','current-label');
+const currentSub=document.createElementNS(NS,'text');
+currentSub.setAttribute('class','current-sub');
+gLabels.append(currentLabel,currentSub);
+
+// hand-drawn wobble baked into the path geometry (no live filter = no hover twitch)
+function quadPt(A,C,B,t){const m=1-t;return [m*m*A[0]+2*m*t*C[0]+t*t*B[0], m*m*A[1]+2*m*t*C[1]+t*t*B[1]];}
+function openSmooth(p){
+  const n=p.length;let d=`M ${p[0][0].toFixed(1)} ${p[0][1].toFixed(1)} `;
+  for(let i=0;i<n-1;i++){
+    const p0=p[i-1<0?0:i-1],p1=p[i],p2=p[i+1],p3=p[i+2>n-1?n-1:i+2];
+    const c1x=p1[0]+(p2[0]-p0[0])/6,c1y=p1[1]+(p2[1]-p0[1])/6;
+    const c2x=p2[0]-(p3[0]-p1[0])/6,c2y=p2[1]-(p3[1]-p1[1])/6;
+    d+=`C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)} `;
+  }
+  return d;
+}
+function wobblyEdge(A,C,B,seed){
+  const rand=rng(seed),M=14,pts=[];
+  for(let i=0;i<=M;i++){
+    const t=i/M,p=quadPt(A,C,B,t),q=quadPt(A,C,B,Math.min(1,t+0.01));
+    let dx=q[0]-p[0],dy=q[1]-p[1];const l=Math.hypot(dx,dy)||1;
+    const nx=-dy/l,ny=dx/l;
+    const amp=(i===0||i===M)?0:3.4*Math.sin(Math.PI*t);
+    const off=(rand()*2-1)*amp;
+    pts.push([p[0]+nx*off,p[1]+ny*off]);
+  }
+  return openSmooth(pts);
+}
+
+// edges (hand-drawn curved)
+const edgeEls=[];
+edges.forEach((e,i)=>{
+  const A=centers[e.a],B=centers[e.b];
+  const mx=(A.x+B.x)/2,my=(A.y+B.y)/2;
+  const dx=B.x-A.x,dy=B.y-A.y,len=Math.hypot(dx,dy)||1;
+  const nx=-dy/len,ny=dx/len;
+  const k=((i%2)?1:-1)*(30+(i*37)%50);
+  const p=document.createElementNS(NS,'path');
+  p.setAttribute('class','edge');
+  p.setAttribute('d',wobblyEdge([A.x,A.y],[mx+nx*k,my+ny*k],[B.x,B.y],101+i*89));
+  gInk.appendChild(p);
+  e.el=p; edgeEls.push(e);
+});
+edgeEls.forEach(e=>{const L=e.el.getTotalLength();e.len=L;e.el.style.strokeDasharray=L;e.el.style.strokeDashoffset=0;});
+
+// nodes: bloom + blob + hit + labels
+const defs=document.createElementNS(NS,'defs');
+Object.entries(centers).forEach(([id,c])=>{
+  const rg=document.createElementNS(NS,'radialGradient');rg.setAttribute('id','glow-'+id);
+  const s1=document.createElementNS(NS,'stop');s1.setAttribute('offset','0%');s1.setAttribute('stop-color',c.hex);s1.setAttribute('stop-opacity','0.55');
+  const s2=document.createElementNS(NS,'stop');s2.setAttribute('offset','100%');s2.setAttribute('stop-color',c.hex);s2.setAttribute('stop-opacity','0');
+  rg.append(s1,s2);defs.appendChild(rg);
+});
+svg.appendChild(defs);
+function splitTwo(name){
+  const w=name.split(' ');
+  if(w.length<=1)return[name,''];
+  let best=1,bestDiff=1e9;
+  for(let i=1;i<w.length;i++){
+    const a=w.slice(0,i).join(' '),b=w.slice(i).join(' ');
+    const d=Math.abs(a.length-b.length);
+    if(d<bestDiff){bestDiff=d;best=i;}
+  }
+  return[w.slice(0,best).join(' '),w.slice(best).join(' ')];
+}
+const N={};
+let seedbase=13;
+Object.entries(centers).forEach(([id,c])=>{
+  const bloom=document.createElementNS(NS,'circle');
+  bloom.setAttribute('class','bloom');bloom.setAttribute('cx',c.x);bloom.setAttribute('cy',c.y);
+  bloom.setAttribute('r',72);bloom.setAttribute('fill','url(#glow-'+id+')');
+  gBloom.appendChild(bloom);
+
+  const b=document.createElementNS(NS,'path');
+  b.setAttribute('class','blob');b.setAttribute('d',blob(c.x,c.y,38,seedbase+=97));
+  b.setAttribute('fill',c.hex);
+  gInk.appendChild(b);
+
+  const g=document.createElementNS(NS,'g');g.setAttribute('class','node');
+  const hit=document.createElementNS(NS,'circle');
+  hit.setAttribute('class','hit');hit.setAttribute('cx',c.x);hit.setAttribute('cy',c.y);hit.setAttribute('r',54);
+  hit.setAttribute('tabindex','0');hit.setAttribute('role','button');hit.setAttribute('aria-label',c.name);
+  const abbr=document.createElementNS(NS,'text');
+  abbr.setAttribute('class','abbr');abbr.setAttribute('x',c.x);abbr.setAttribute('y',c.y);abbr.textContent=id;
+  const tag=document.createElementNS(NS,'text');
+  tag.setAttribute('class','tag');tag.setAttribute('x',c.x);tag.setAttribute('text-anchor','middle');
+  const [l1,l2]=splitTwo(c.name);
+  const above=c.y<400, R=40, lineH=16;
+  const y1= above ? (c.y-R-26) : (c.y+R+22);
+  const ts1=document.createElementNS(NS,'tspan');ts1.setAttribute('x',c.x);ts1.setAttribute('y',y1);ts1.textContent=l1;
+  const ts2=document.createElementNS(NS,'tspan');ts2.setAttribute('x',c.x);ts2.setAttribute('y',y1+lineH);ts2.textContent=l2;
+  tag.append(ts1,ts2);
+  g.append(hit,abbr,tag);gLabels.appendChild(g);
+
+  N[id]={bloom,blob:b,node:g,hit};
+  hit.addEventListener('mouseenter',()=>{if(!pinned)activateNode(id);});
+  hit.addEventListener('mouseleave',()=>{if(!pinned)resetView();});
+  hit.addEventListener('focus',()=>{if(!pinned)activateNode(id);});
+  hit.addEventListener('click',ev=>{ev.stopPropagation();pinned=(pinned===id)?null:id;pinned?activateNode(id):resetView();});
+  hit.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();pinned=(pinned===id)?null:id;pinned?activateNode(id):resetView();}});
+});
+svg.addEventListener('click',()=>{pinned=null;resetView();});
+let pinned=null;
+
+function grow(e,color){
+  e.el.classList.remove('dim');e.el.classList.add('lit');e.el.style.stroke=color;
+}
+function clearAll(){
+  edgeEls.forEach(e=>{e.el.classList.remove('lit','dim');e.el.style.stroke='';});
+  Object.values(N).forEach(n=>{n.blob.classList.remove('dim');n.node.classList.remove('lit','dim','focus');n.bloom.classList.remove('on');});
+  currentLabel.classList.remove('on');currentSub.classList.remove('on');
+}
+function connEl(label,text,isPair){
+  const d=document.createElement('div');d.className='conn';
+  const who=document.createElement('div');who.className='who';
+  if(!isPair){const chip=document.createElement('span');chip.className='chip';chip.style.background=centers[label].hex;who.appendChild(chip);who.appendChild(document.createTextNode(centers[label].name));}
+  else who.appendChild(document.createTextNode(label));
+  const what=document.createElement('div');what.className='what';what.textContent=text;
+  d.append(who,what);return d;
+}
+function activateNode(id){
+  clearThemeButtons();clearAll();
+  const inc=edgeEls.filter(e=>e.a===id||e.b===id);
+  const partners=new Set([id]);
+  inc.forEach(e=>{partners.add(e.a);partners.add(e.b);grow(e,centers[id].hex);});
+  edgeEls.forEach(e=>{if(!inc.includes(e))e.el.classList.add('dim');});
+  Object.keys(N).forEach(k=>{
+    if(partners.has(k)){N[k].node.classList.add('lit');if(k===id){N[k].bloom.classList.add('on');N[k].node.classList.add('focus');}}
+    else{N[k].node.classList.add('dim');N[k].blob.classList.add('dim');}
+  });
+  document.getElementById('panelTitle').textContent=centers[id].name;
+  document.getElementById('panelLede').textContent='Six living currents reach out from '+id+'.';
+  const det=document.getElementById('detail');det.innerHTML='';
+  inc.forEach(e=>det.appendChild(connEl(e.a===id?e.b:e.a,e.t)));
+}
+function activateTheme(idx){
+  pinned=null;const th=themes[idx];clearAll();
+  const set=new Set(th.nodes);
+  const keys=new Set(th.pairs.map(p=>p.join('|')).concat(th.pairs.map(p=>p[1]+'|'+p[0])));
+  edgeEls.forEach(e=>{if(keys.has(e.a+'|'+e.b)||keys.has(e.b+'|'+e.a))grow(e,'#bd5230');else e.el.classList.add('dim');});
+  Object.keys(N).forEach(k=>{if(set.has(k)){N[k].node.classList.add('lit');N[k].bloom.classList.add('on');}else{N[k].node.classList.add('dim');N[k].blob.classList.add('dim');}});
+  // place the current's name among its centers
+  const cx=th.nodes.reduce((s,n)=>s+centers[n].x,0)/th.nodes.length;
+  const cy=th.nodes.reduce((s,n)=>s+centers[n].y,0)/th.nodes.length;
+  currentLabel.setAttribute('x',cx);currentLabel.setAttribute('y',cy-6);currentLabel.textContent=th.name;
+  currentSub.setAttribute('x',cx);currentSub.setAttribute('y',cy+15);currentSub.textContent=th.nodes.join(' · ');
+  currentLabel.classList.add('on');currentSub.classList.add('on');
+  document.getElementById('panelTitle').textContent=th.name;
+  document.getElementById('panelLede').textContent=th.blurb;
+  const det=document.getElementById('detail');det.innerHTML='';
+  th.pairs.forEach(([a,b])=>{const e=edgeEls.find(x=>(x.a===a&&x.b===b)||(x.a===b&&x.b===a));if(e)det.appendChild(connEl(a+' ↔ '+b,e.t,true));});
+}
+function resetView(){
+  pinned=null;clearThemeButtons();clearAll();
+  document.getElementById('panelTitle').textContent='The whole relation';
+  document.getElementById('panelLede').textContent='Seven centers, each in relation with every other — twenty-one living currents. Choose a center to follow its six, or trace a shared current below.';
+  document.getElementById('detail').innerHTML='';
+}
+// theme buttons
+const tb=document.getElementById('themeBtns');
+themes.forEach((th,i)=>{
+  const b=document.createElement('button');b.className='btn';b.innerHTML='<span class="dot"></span>'+th.name;
+  b.addEventListener('click',()=>{const was=b.classList.contains('active');clearThemeButtons();if(was)resetView();else{b.classList.add('active');activateTheme(i);}});
+  tb.appendChild(b);
+});
+function clearThemeButtons(){[...tb.children].forEach(b=>b.classList.remove('active'));}
+document.getElementById('resetBtn').addEventListener('click',resetView);
+// legend
+const lg=document.getElementById('legend');
+Object.entries(centers).forEach(([id,c])=>{
+  const it=document.createElement('div');it.className='item';
+  it.innerHTML='<span class="chip" style="background:'+c.hex+'"></span><strong>'+id+'</strong> — '+c.name;
+  lg.appendChild(it);
+});
+// draw-in on load (roots growing like live scribing)
+const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+if(!reduce){
+  edgeEls.forEach((e,i)=>{
+    e.el.style.transition='none';e.el.style.strokeDashoffset=e.len;e.el.getBoundingClientRect();
+    setTimeout(()=>{e.el.style.transition='stroke-dashoffset 1s ease';e.el.style.strokeDashoffset=0;},120+i*55);
+  });
+}
+resetView();
+</script>
+</body>
+</html>
